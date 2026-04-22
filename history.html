@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>History</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h2 style="text-align:center;">📈 30 Day Glucose History</h2>
+<canvas id="historyChart"></canvas>
+
+<script>
+fetch("/history")
+.then(res => res.json())
+.then(data => {
+
+let ctx = document.getElementById("historyChart");
+
+let labels = data.map(h => h.time);
+let values = data.map(h => h.glucose);
+
+new Chart(ctx,{
+type:"line",
+data:{
+labels: labels,
+datasets:[{
+label:"Glucose Level",
+data: values,
+borderColor:"blue",
+fill:false
+}]
+}
+});
+
+});
+</script>
+
+</body>
+</html>
