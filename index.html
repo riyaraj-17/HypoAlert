@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hypoglycemia AI Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div class="page">
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">H</div>
+            <div>
+                <p id="brandTitle">Hypo Alert</p>
+                <span id="brandSubtitle">AI Health Monitor</span>
+            </div>
+        </div>
+        <nav class="menu">
+            <a id="navHome" class="active" href="/dashboard">Home</a>
+            <a id="navHistory" href="/history-page">History</a>
+            <a id="navLogout" href="/logout">Logout</a>
+        </nav>
+        <div class="actions">
+            <select id="langSelect" onchange="applyLanguage()">
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+                <option value="kn">ಕನ್ನಡ</option>
+            </select>
+        </div>
+    </header>
+
+    <section class="hero-grid">
+        <div class="hero-card">
+            <div id="heroTag" class="hero-tag">RECOMMENDED</div>
+            <h1 id="title">🧠 Hypoglycemia AI Monitoring System</h1>
+            <p id="heroDescription">Monitor glucose trends and get instant recommendations with AI-powered risk scoring, food advice, and emergency alerts.</p>
+            <div class="hero-metrics">
+                <div>
+                    <span id="heroRiskLabel">Risk Score</span>
+                    <strong id="score">Risk Score: --%</strong>
+                </div>
+                <div>
+                    <span id="heroConfidenceLabel">AI Confidence</span>
+                    <strong id="confidence">AI Confidence: --%</strong>
+                </div>
+            </div>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span id="labelCurrentGlucose">Current Glucose</span>
+                <strong id="currentGlucose">-- mg/dL</strong>
+            </div>
+            <div class="stat-card">
+                <span id="labelCurrentHours">Hours Since Meal</span>
+                <strong id="currentHours">-- hrs</strong>
+            </div>
+            <div class="stat-card">
+                <span id="labelCurrentActivity">Current Activity</span>
+                <strong id="currentActivity">Medium</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="main-grid">
+        <aside class="card input-card">
+            <div class="card-header"><h3 id="enterDetails">Enter Details</h3></div>
+            <input type="number" id="glucose" placeholder="Glucose Level">
+            <input type="number" id="hours" placeholder="Hours Since Meal">
+            <input type="number" id="insulin" placeholder="Hours Since Insulin">
+            <select id="activity">
+                <option value="low">Low Activity</option>
+                <option value="medium">Medium Activity</option>
+                <option value="high">High Activity</option>
+            </select>
+            <button onclick="predict()" id="predictBtn">Predict</button>
+            <button class="ghost" onclick="downloadReport()" id="reportBtn">Download Report</button>
+            <div class="hint-row">
+                <span id="trackHint">Track your readings and get a personalized overview.</span>
+            </div>
+        </aside>
+
+        <div class="right-grid">
+            <section class="card result-card">
+                <div class="card-header"><h3 id="resultTitle">Result</h3></div>
+                <div class="result-content">
+                    <h2 id="result">--</h2>
+                    <p id="suggestion"></p>
+                    <p id="food"></p>
+                    <div id="insightBox" class="insight-box"></div>
+                </div>
+                <div class="progress-bg">
+                    <div id="progressBar"></div>
+                </div>
+                <div id="alertBox"></div>
+                <div id="emergencyBox" class="emergency-box"></div>
+            </section>
+
+            <section class="card chart-card">
+                <div class="card-header"><h3>📊 <span id="chartTitle">Glucose Trend</span></h3></div>
+                <canvas id="chart"></canvas>
+            </section>
+        </div>
+    </section>
+</div>
+
+<script>
+// 🌐 LANGUAGE SYSTEM
+let currentLang = "en";
+
+const lang = {
+en: {
+    title:"🧠 Hypoglycemia AI Monitoring System",
+    navHome:"Home",
+    navHistory:"History",
+    navLogout:"Logout",
+    brandTitle:"Hypo Alert",
+    brandSubtitle:"AI Health Monitor",
+    heroTag:"RECOMMENDED",
+    heroDesc:"Monitor glucose trends and get instant recommendations with AI-powered risk scoring, food advice, and emergency alerts.",
+    heroRisk:"Risk Score",
+    heroConfidence:"AI Confidence",
+    enter:"Enter Details",
+    predict:"Predict",
+    report:"Download Report",
+    chart:"Glucose Trend",
+    glucose:"Glucose Level",
+    hours:"Hours Since Meal",
+    insulin:"Hours Since Insulin",
+    activityLow:"Low Activity",
+    activityMedium:"Medium Activity",
+    activityHigh:"High Activity",
+    trackHint:"Track your readings and get a personalized overview.",
+    labelCurrentGlucose:"Current Glucose",
+    labelCurrentHours:"Hours Since Meal",
+    labelCurrentActivity:"Current Activity",
+    insightTitle:"AI Insight",
+    emergencyHigh:"Call Emergency",
+    emergencyAlert:"Send Alert",
+    result:"Result"
+},
+hi: {
+    title:"🧠 हाइपोग्लाइसीमिया एआई मॉनिटरिंग सिस्टम",
+    navHome:"मुखपृष्ठ",
+    navHistory:"इतिहास",
+    navLogout:"लॉगआउट",
+    brandTitle:"हाइपो अलर्ट",
+    brandSubtitle:"एआई स्वास्थ्य मॉनिटर",
+    heroTag:"अनुशंसित",
+    heroDesc:"ग्लूकोज रुझानों की निगरानी करें और एआई जोखिम स्कोरिंग, खाद्य सलाह और आपातकालीन अलर्ट के साथ त्वरित सुझाव प्राप्त करें।",
+    heroRisk:"जोखिम स्कोर",
+    heroConfidence:"एआई आत्मविश्वास",
+    enter:"विवरण दर्ज करें",
+    predict:"पूर्वानुमान करें",
+    report:"रिपोर्ट डाउनलोड करें",
+    chart:"ग्लूकोज़ प्रवृत्ति",
+    glucose:"ग्लूकोज़ स्तर",
+    hours:"भोजन के बाद घंटे",
+    insulin:"इंसुलिन के बाद घंटे",
+    activityLow:"कम गतिविधि",
+    activityMedium:"मध्यम गतिविधि",
+    activityHigh:"उच्च गतिविधि",
+    trackHint:"अपने रीडिंग्स ट्रैक करें और एक व्यक्तिगत अवलोकन प्राप्त करें।",
+    labelCurrentGlucose:"वर्तमान ग्लूकोज",
+    labelCurrentHours:"भोजन के बाद घंटे",
+    labelCurrentActivity:"वर्तमान गतिविधि",
+    insightTitle:"एआई अंतर्दृष्टि",
+    emergencyHigh:"आपातकाल कॉल करें",
+    emergencyAlert:"अलर्ट भेजें",
+    result:"परिणाम"
+},
+kn: {
+    title:"🧠 ಹೈಪೊಗ್ಲೈಸಿಮಿಯಾ ಎಐ ಮಾನಿಟರಿಂಗ್ ಸಿಸ್ಟಮ್",
+    navHome:"ಮುಖಪುಟ",
+    navHistory:"ಇತಿಹಾಸ",
+    navLogout:"ಲಾಗ್ ಔಟ್",
+    brandTitle:"ಹೈಪೊ ಅಲರ್ಟ್",
+    brandSubtitle:"ಎಐ ಆರೋಗ್ಯ ಮಾನಿಟರ್",
+    heroTag:"ಶಿಫಾರಸು",
+    heroDesc:"ಗ್ಲೂಕೋಸ್ ಪ್ರವೃತ್ತಿಗಳನ್ನು ಮೇಲ್ವಿಚಾರಣೆ ಮಾಡಿ ಮತ್ತು ಎಐ ಆಧಾರಿತ ಅಪಾಯ ಮೌಲ್ಯಮಾಪನ, ಆಹಾರ ಸಲಹೆ ಮತ್ತು ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳೊಂದಿಗೆ ತಕ್ಷಣದ ಶಿಫಾರಸ್ಸುಗಳನ್ನು ಪಡೆಯಿರಿ.",
+    heroRisk:"ರಿಸ್ಕ್ ಸ್ಕೋರ್",
+    heroConfidence:"ಎಐ ವಿಶ್ವಾಸ",
+    enter:"ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ",
+    predict:"ಭವಿಷ್ಯವಾಣಿ",
+    report:"ವರದಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+    chart:"ಗ್ಲೂಕೋಸ್ ಪ್ರವೃತ್ತಿ",
+    glucose:"ಗ್ಲೂಕೋಸ್ ಮಟ್ಟ",
+    hours:"ಊಟದ ನಂತರ ಗಂಟೆಗಳು",
+    insulin:"ಇನ್ಸುಲಿನ್ ನಂತರ ಗಂಟೆಗಳು",
+    activityLow:"ಕಮ್ಮಿ ಚಟುವಟಿಕೆ",
+    activityMedium:"ಮಧ್ಯಮ ಚಟುವಟಿಕೆ",
+    activityHigh:"ಹೆಚ್ಚು ಚಟುವಟಿಕೆ",
+    trackHint:"ನಿಮ್ಮ ರೀಡಿಂಗ್‌ಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ ಮತ್ತು ವೈಯಕ್ತಿಕೃತ ಅವಲೋಕನವನ್ನು ಪಡೆಯಿರಿ.",
+    labelCurrentGlucose:"ಪ್ರಸ್ತುತ ಗ್ಲೂಕೋಸ್",
+    labelCurrentHours:"ಭೋಜನದ ನಂತರ ಗಂಟೆಗಳು",
+    labelCurrentActivity:"ಪ್ರಸ್ತುತ ಚಟುವಟಿಕೆ",
+    insightTitle:"ಎಐ ಅಂತರ್ದೃಷ್ಟಿ",
+    emergencyHigh:"ತುರ್ತು ಕರೆ ಮಾಡಿ",
+    emergencyAlert:"ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಿ",
+    result:"ಫಲಿತಾಂಶ"
+}
+};
+
+function applyLanguage(){
+    currentLang = document.getElementById("langSelect").value;
+    let t = lang[currentLang];
+
+    document.getElementById("title").innerText = t.title;
+    document.getElementById("navHome").innerText = t.navHome;
+    document.getElementById("navHistory").innerText = t.navHistory;
+    document.getElementById("navLogout").innerText = t.navLogout;
+    document.getElementById("brandTitle").innerText = t.brandTitle;
+    document.getElementById("brandSubtitle").innerText = t.brandSubtitle;
+    document.getElementById("heroTag").innerText = t.heroTag;
+    document.getElementById("heroDescription").innerText = t.heroDesc;
+    document.getElementById("heroRiskLabel").innerText = t.heroRisk;
+    document.getElementById("heroConfidenceLabel").innerText = t.heroConfidence;
+    document.getElementById("enterDetails").innerText = t.enter;
+    document.getElementById("predictBtn").innerText = t.predict;
+    document.getElementById("reportBtn").innerText = t.report;
+    document.getElementById("resultTitle").innerText = t.result;
+    document.getElementById("chartTitle").innerText = t.chart;
+    document.getElementById("trackHint").innerText = t.trackHint;
+    document.getElementById("labelCurrentGlucose").innerText = t.labelCurrentGlucose;
+    document.getElementById("labelCurrentHours").innerText = t.labelCurrentHours;
+    document.getElementById("labelCurrentActivity").innerText = t.labelCurrentActivity;
+
+    document.getElementById("glucose").placeholder = t.glucose;
+    document.getElementById("hours").placeholder = t.hours;
+    document.getElementById("insulin").placeholder = t.insulin;
+
+    document.querySelector("#activity option[value='low']").innerText = t.activityLow;
+    document.querySelector("#activity option[value='medium']").innerText = t.activityMedium;
+    document.querySelector("#activity option[value='high']").innerText = t.activityHigh;
+}
+
+// 🔊 VOICE (English only)
+function speak(text){
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-US";
+    window.speechSynthesis.speak(speech);
+}
+
+let chart;
+
+function predict(){
+
+let glucose = document.getElementById("glucose").value;
+let hours = document.getElementById("hours").value;
+let insulin = document.getElementById("insulin").value;
+let activity = document.getElementById("activity").value;
+
+fetch("/predict", {
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({glucose, hours, insulin, activity})
+})
+.then(res => res.json())
+.then(data => {
+
+document.getElementById("result").innerText = data.result;
+document.getElementById("score").innerText = "Risk Score: " + data.score + "%";
+document.getElementById("suggestion").innerText = data.suggestion;
+document.getElementById("food").innerText = "🍎 Food: " + data.food;
+document.getElementById("confidence").innerText =
+    "AI Confidence: " + data.confidence + "%";
+document.getElementById("currentGlucose").innerText = glucose ? glucose + " mg/dL" : "-- mg/dL";
+document.getElementById("currentHours").innerText = hours ? hours + " hrs" : "-- hrs";
+document.getElementById("currentActivity").innerText = activity.charAt(0).toUpperCase() + activity.slice(1);
+
+// AI Insight
+let insightHTML = "<b>🧠 " + lang[currentLang].insightTitle + ":</b><ul>";
+data.insight.forEach(i => {
+    insightHTML += "<li>" + i + "</li>";
+});
+insightHTML += "</ul>";
+document.getElementById("insightBox").innerHTML = insightHTML;
+
+speak(data.result + ". " + data.suggestion);
+
+let bar = document.getElementById("progressBar");
+bar.style.width = data.score + "%";
+
+let alertBox = document.getElementById("alertBox");
+
+if(data.score > 75){
+    bar.style.background = "#ff4d4d";
+    alertBox.style.color = "#ff4d4d";
+}
+else if(data.score > 40){
+    bar.style.background = "#ffa726";
+    alertBox.style.color = "#ffa726";
+}
+else{
+    bar.style.background = "#00e676";
+    alertBox.style.color = "#00e676";
+}
+
+if(data.history){
+    updateChart(data.history);
+}
+
+let emergencyBox = document.getElementById("emergencyBox");
+if(data.result.startsWith("HIGH")){
+    emergencyBox.innerHTML = `
+        <button onclick="callEmergency()" style="background:#ff1744;">
+            📞 ${lang[currentLang].emergencyHigh}
+        </button>
+        <button onclick="sendAlert()" style="background:#ff9100; margin-top:8px;">
+            📩 ${lang[currentLang].emergencyAlert}
+        </button>
+    `;
+}else{
+    emergencyBox.innerHTML = "";
+}
+
+});
+}
+
+function updateChart(history){
+let ctx = document.getElementById("chart");
+if(chart) chart.destroy();
+
+let labels = history.map(h => h.time || h.date);
+let glucoseValues = history.map(h => h.glucose);
+
+chart = new Chart(ctx,{
+type:"line",
+data:{
+labels: labels,
+datasets:[{
+label:"Glucose Level",
+data: glucoseValues,
+borderColor:"red",
+fill:false
+}]
+}
+});
+}
+
+function getChartImage(){
+    let canvas = document.getElementById("chart");
+    return canvas.toDataURL("image/png");
+}
+
+function downloadReport(){
+fetch("/history")
+.then(res => res.json())
+.then(history => {
+
+let result = document.getElementById("result").innerText;
+let score = document.getElementById("score").innerText;
+let suggestion = document.getElementById("suggestion").innerText;
+let food = document.getElementById("food").innerText;
+
+let chartImage = getChartImage();
+
+let reportHTML = `
+<html>
+<body style="font-family:Arial;padding:20px;">
+<h1>Hypoglycemia AI — Monthly Report</h1>
+<p><b>${result}</b></p>
+<p>${score}</p>
+<p>${suggestion}</p>
+<p>${food}</p>
+<img src="${chartImage}" style="width:100%;margin-top:20px;"/>
+</body>
+</html>
+`;
+
+let blob = new Blob([reportHTML], {type:"text/html"});
+let a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "Hypoglycemia_Report.html";
+a.click();
+
+});
+}
+
+function callEmergency(){
+window.location.href = "tel:112";
+}
+
+function sendAlert(){
+let message = "🚨 High Risk Hypoglycemia detected! Immediate attention needed.";
+window.location.href = "sms:?body=" + encodeURIComponent(message);
+}
+
+window.onload = function(){
+applyLanguage();
+fetch("/history")
+.then(res => res.json())
+.then(data => {
+    if(data.length) updateChart(data);
+});
+}
+</script>
+
+</body>
+</html>
