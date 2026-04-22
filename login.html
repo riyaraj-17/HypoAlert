@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="auth-wrapper">
+    <div class="auth-language">
+        <select id="langSelect" onchange="applyLanguage()">
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
+            <option value="kn">ಕನ್ನಡ</option>
+        </select>
+    </div>
+
+    <div class="auth-grid">
+        <div class="auth-panel auth-panel-left">
+            <div class="auth-brand">
+                <div class="auth-brand-mark">H</div>
+                <div>
+                    <p id="loginTitle">Login</p>
+                    <span id="loginSub">Welcome back! Sign in to continue.</span>
+                </div>
+            </div>
+
+            <form method="POST" class="auth-form">
+                <label for="username" id="usernameLabel">Username</label>
+                <input type="text" name="username" id="username" placeholder="Username" required>
+
+                <label for="password" id="passwordLabel">Password</label>
+                <input type="password" name="password" id="password" placeholder="Password" required>
+
+                <button type="submit" id="loginBtn">Login</button>
+            </form>
+
+            {% if error %}
+            <p class="auth-error" id="errorMsg">{{ error }}</p>
+            {% endif %}
+
+            <p class="auth-footer">
+                <span id="signupPrompt">Don't have an account?</span>
+                <a href="/signup" id="signupLink">Signup</a>
+            </p>
+        </div>
+
+        <div class="auth-panel auth-panel-right">
+            <div class="auth-side-hero">
+                <div class="hero-dot"></div>
+                <div class="hero-shape hero-shape-1"></div>
+                <div class="hero-shape hero-shape-2"></div>
+                <div class="hero-text">
+                    <h3>Secure access</h3>
+                    <p>Sign in quickly and keep your health data safe with a modern encrypted login experience.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const lang = {
+en:{
+    login:"Login",
+    user:"Username",
+    pass:"Password",
+    btn:"Login",
+    signupPrompt:"Don't have an account?",
+    signupLink:"Signup",
+    sub:"Welcome back! Sign in to continue."
+},
+hi:{
+    login:"लॉगिन",
+    user:"उपयोगकर्ता नाम",
+    pass:"पासवर्ड",
+    btn:"लॉगिन",
+    signupPrompt:"खाता नहीं है?",
+    signupLink:"साइनअप करें",
+    sub:"वापस स्वागत है! जारी रखने के लिए साइन इन करें।"
+},
+kn:{
+    login:"ಲಾಗಿನ್",
+    user:"ಬಳಕೆದಾರ ಹೆಸರು",
+    pass:"ಪಾಸ್ವರ್ಡ್",
+    btn:"ಲಾಗಿನ್",
+    signupPrompt:"ಖಾತೆ ಇಲ್ಲವೇ?",
+    signupLink:"ಸೈನ್ ಅಪ್ ಮಾಡಿ",
+    sub:"ಮತ್ತೆ ಸ್ವಾಗತ! ಮುಂದುವರೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ."
+}
+};
+
+function applyLanguage(){
+    let l = document.getElementById("langSelect").value;
+    let t = lang[l];
+
+    document.getElementById("loginTitle").innerText = t.login;
+    document.getElementById("loginSub").innerText = t.sub;
+    document.getElementById("username").placeholder = t.user;
+    document.getElementById("password").placeholder = t.pass;
+    document.getElementById("loginBtn").innerText = t.btn;
+    document.getElementById("signupPrompt").innerText = t.signupPrompt;
+    document.getElementById("signupLink").innerText = t.signupLink;
+}
+
+window.onload = applyLanguage;
+</script>
+
+</body>
+</html>
