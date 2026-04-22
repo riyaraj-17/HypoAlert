@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div style="text-align:right; padding:10px;">
+<select id="langSelect" onchange="applyLanguage()">
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+    <option value="kn">ಕನ್ನಡ</option>
+</select>
+</div>
+
+<div class="card">
+<h2 id="signupTitle">Signup</h2>
+
+<form method="POST">
+    <input type="text" name="username" id="username" placeholder="Username" required>
+    <input type="password" name="password" id="password" placeholder="Password" required>
+    <button type="submit" id="signupBtn">Signup</button>
+</form>
+
+<p id="loginText">
+    <span id="loginPrompt">Already have an account?</span> <a href="/" id="loginLink">Login</a>
+</p>
+
+{% if error %}
+<p style="color:red;" id="errorMsg">{{ error }}</p>
+{% endif %}
+</div>
+
+<script>
+const lang = {
+en:{
+    signup:"Signup",
+    user:"Username",
+    pass:"Password",
+    btn:"Signup",
+    loginPrompt:"Already have an account?",
+    loginLink:"Login"
+},
+hi:{
+    signup:"साइनअप",
+    user:"उपयोगकर्ता नाम",
+    pass:"पासवर्ड",
+    btn:"साइनअप",
+    loginPrompt:"पहले से खाता है?",
+    loginLink:"लॉगिन करें"
+},
+kn:{
+    signup:"ಸೈನ್ ಅಪ್",
+    user:"ಬಳಕೆದಾರ ಹೆಸರು",
+    pass:"ಪಾಸ್ವರ್ಡ್",
+    btn:"ಸೈನ್ ಅಪ್",
+    loginPrompt:"ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೆ?",
+    loginLink:"ಲಾಗಿನ್ ಮಾಡಿ"
+}
+};
+
+function applyLanguage(){
+    let l = document.getElementById("langSelect").value;
+    let t = lang[l];
+
+    document.getElementById("signupTitle").innerText = t.signup;
+    document.getElementById("username").placeholder = t.user;
+    document.getElementById("password").placeholder = t.pass;
+    document.getElementById("signupBtn").innerText = t.btn;
+    document.getElementById("loginPrompt").innerText = t.loginPrompt;
+    document.getElementById("loginLink").innerText = t.loginLink;
+}
+
+window.onload = applyLanguage;
+</script>
+
+</body>
+</html>
